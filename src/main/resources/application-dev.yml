@@ -1,1 +1,15 @@
-spring.application.name=pokemon
+spring:
+  application:
+    name: pokemon
+
+pokeapi:
+  base-url: https://pokeapi.co/api/v2
+  pokemon-path: /pokemon/
+  timeout:
+    connect-ms: 5000
+    read-ms: 10000
+  retry:
+    max-attempts: 3
+    initial-backoff-ms: 100
+    multiplier: 2.0
+    max-interval: 10000
