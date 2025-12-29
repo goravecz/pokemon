@@ -30,22 +30,26 @@
 		<java.version>21</java.version>
 		<maven.surefire.version>3.5.4</maven.surefire.version>
 		<maven.failsafe.version>3.5.4</maven.failsafe.version>
+        <springdoc.openapi.starter.version>2.8.14</springdoc.openapi.starter.version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.retry</groupId>
 			<artifactId>spring-retry</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-aspects</artifactId>
 		</dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.openapi.starter.version}</version>
+        </dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -95,6 +99,9 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/PokemonApplication.class</exclude>
+                                <exclude>**/config/**</exclude>
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/model/**</exclude>
                             </excludes>
                             <rules>
                                 <rule>

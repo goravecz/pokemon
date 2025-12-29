@@ -1,6 +1,7 @@
 package com.accenture.pokemon.client;
 
 import com.accenture.pokemon.dto.PokeApiResponse;
+import com.accenture.pokemon.exception.PokeApiUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -104,8 +105,8 @@ class PokeApiClientTest {
         // when
         // then
         assertThatThrownBy(() -> client.fetchPokemonById(NONEXISTENT_POKEMON_ID))
-                .isInstanceOf(HttpClientErrorException.class)
-                .hasMessageContaining("404");
+                .isInstanceOf(PokeApiUnavailableException.class)
+                .hasMessageContaining("PokeAPI unavailable after retries");
 
         verify(restTemplate, times(1)).getForObject(eq(url), eq(PokeApiResponse.class));
     }
@@ -120,8 +121,8 @@ class PokeApiClientTest {
         // when
         // then
         assertThatThrownBy(() -> client.fetchPokemonById(PIKACHU_ID))
-                .isInstanceOf(HttpClientErrorException.class)
-                .hasMessageContaining("400");
+                .isInstanceOf(PokeApiUnavailableException.class)
+                .hasMessageContaining("PokeAPI unavailable after retries");
 
         verify(restTemplate, times(1)).getForObject(eq(url), eq(PokeApiResponse.class));
     }

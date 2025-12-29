@@ -90,6 +90,48 @@ class PokeApiErrorHandlerTest {
     }
 
     @Test
+    void handleError_shouldThrowRetryableException_when429() throws IOException {
+        // given
+        when(response.getStatusCode()).thenReturn(HttpStatus.TOO_MANY_REQUESTS);
+
+        // when
+        // then
+        assertThatThrownBy(() -> errorHandler.handleError(
+                URI.create(buildPokemonUrl(PIKACHU_ID)),
+                HttpMethod.GET,
+                response
+        ))
+                .isInstanceOf(RetryablePokeApiException.class)
+                .hasCauseInstanceOf(HttpClientErrorException.class)
+                .satisfies(throwable -> {
+                    RetryablePokeApiException ex = (RetryablePokeApiException) throwable;
+                    assertThat(ex.getCause())
+                            .hasMessageContaining("429");
+                });
+    }
+
+    @Test
+    void handleError_shouldThrowRetryableException_when408() throws IOException {
+        // given
+        when(response.getStatusCode()).thenReturn(HttpStatus.REQUEST_TIMEOUT);
+
+        // when
+        // then
+        assertThatThrownBy(() -> errorHandler.handleError(
+                URI.create(buildPokemonUrl(PIKACHU_ID)),
+                HttpMethod.GET,
+                response
+        ))
+                .isInstanceOf(RetryablePokeApiException.class)
+                .hasCauseInstanceOf(HttpClientErrorException.class)
+                .satisfies(throwable -> {
+                    RetryablePokeApiException ex = (RetryablePokeApiException) throwable;
+                    assertThat(ex.getCause())
+                            .hasMessageContaining("408");
+                });
+    }
+
+    @Test
     void handleError_shouldThrowRetryableException_when500() throws IOException {
         // given
         when(response.getStatusCode()).thenReturn(HttpStatus.INTERNAL_SERVER_ERROR);
