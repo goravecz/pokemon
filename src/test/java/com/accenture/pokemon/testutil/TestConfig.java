@@ -32,6 +32,55 @@ public final class TestConfig {
     public static final int PIKACHU_ID = 25;
     public static final String PIKACHU_NAME = "pikachu";
     public static final int NONEXISTENT_POKEMON_ID = 99999;
+    public static final String ELECTRIC_TYPE = "electric";
+    public static final String PIKACHU_IMAGE_URL = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png";
+    public static final int MIN_STRENGTH = 1;
+    public static final int MAX_STRENGTH = 20;
+    public static final int TEST_STRENGTH = 10;
+    public static final int MAX_404_RETRY_ATTEMPTS = 3;
+    
+    // API Endpoints
+    public static final String POKEMONS_ENDPOINT = "/api/v1/pokemons";
+    public static final String HTTPS_PREFIX = "https://";
+    
+    // Mock JSON Responses
+    public static final String PIKACHU_JSON = """
+            {
+                "name": "pikachu",
+                "types": [{"slot": 1, "type": {"name": "electric", "url": "https://pokeapi.co/api/v2/type/13/"}}],
+                "sprites": {"front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"}
+            }
+            """;
+    
+    public static final String CHARIZARD_JSON = """
+            {
+                "name": "charizard",
+                "types": [
+                    {"slot": 1, "type": {"name": "fire", "url": "https://pokeapi.co/api/v2/type/10/"}},
+                    {"slot": 2, "type": {"name": "flying", "url": "https://pokeapi.co/api/v2/type/3/"}}
+                ],
+                "sprites": {"front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png"}
+            }
+            """;
+    
+    public static final String BULBASAUR_JSON = """
+            {
+                "name": "bulbasaur",
+                "types": [
+                    {"slot": 1, "type": {"name": "grass", "url": "https://pokeapi.co/api/v2/type/12/"}},
+                    {"slot": 2, "type": {"name": "poison", "url": "https://pokeapi.co/api/v2/type/4/"}}
+                ],
+                "sprites": {"front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png"}
+            }
+            """;
+    
+    public static final String SQUIRTLE_JSON = """
+            {
+                "name": "squirtle",
+                "types": [{"slot": 1, "type": {"name": "water", "url": "https://pokeapi.co/api/v2/type/11/"}}],
+                "sprites": {"front_default": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png"}
+            }
+            """;
 
     public static PokeApiProperties createTestProperties() {
         return new PokeApiProperties(
