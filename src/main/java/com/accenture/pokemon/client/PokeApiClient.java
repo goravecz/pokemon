@@ -2,6 +2,7 @@ package com.accenture.pokemon.client;
 
 import com.accenture.pokemon.dto.PokeApiResponse;
 import com.accenture.pokemon.config.PokeApiProperties;
+import com.accenture.pokemon.exception.PokeApiUnavailableException;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -30,7 +31,13 @@ public class PokeApiClient {
 
     private PokeApiResponse fetch(String url) {
         return retryTemplate.execute(
-                ctx -> restTemplate.getForObject(url, PokeApiResponse.class)
+                ctx -> restTemplate.getForObject(url, PokeApiResponse.class),
+                ctx -> {
+                    throw new PokeApiUnavailableException(
+                            "PokeAPI unavailable after retries",
+                            ctx.getLastThrowable()
+                    );
+                }
         );
     }
 

@@ -23,6 +23,12 @@ public class PokeApiErrorHandler implements ResponseErrorHandler {
     public void handleError(URI url, HttpMethod method, ClientHttpResponse response) throws IOException {
         HttpStatusCode status = response.getStatusCode();
 
+        if (status.value() == 429 || status.value() == 408) {
+            throw new RetryablePokeApiException(
+                    new HttpClientErrorException(status)
+            );
+        }
+
         if (status.is4xxClientError()) {
             throw new HttpClientErrorException(status);
         }
