@@ -2,6 +2,11 @@ spring:
   application:
     name: pokemon
 
+# uncomment for verbose response logging
+#logging:
+#  level:
+#    com.accenture.pokemon.client: DEBUG
+
 pokeapi:
   base-url: https://pokeapi.co/api/v2
   pokemon-path: /pokemon/
