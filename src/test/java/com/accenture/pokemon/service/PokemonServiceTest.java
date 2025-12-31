@@ -40,12 +40,12 @@ class PokemonServiceTest {
     }
 
     @Test
-    void getPokemons_shouldReturnTwoPokemons_whenSuccessful() {
+    void getPokemons_shouldReturnPokemonPair_whenSuccessful() {
         // given
         PokeApiResponse response = createPikachuResponse();
         Pokemon pokemon = new Pokemon(PIKACHU_NAME, List.of(ELECTRIC_TYPE), PIKACHU_IMAGE_URL, TEST_STRENGTH);
         
-        when(pokeApiClient.fetchPokemonById(anyInt())).thenReturn(response);
+        when(pokeApiClient.fetchPokemon(anyInt())).thenReturn(response);
         when(pokemonMapper.toPokemon(any(PokeApiResponse.class), anyInt())).thenReturn(pokemon);
 
         // when
@@ -54,7 +54,7 @@ class PokemonServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.pokemons()).hasSize(2);
-        verify(pokeApiClient, times(2)).fetchPokemonById(anyInt());
+        verify(pokeApiClient, times(2)).fetchPokemon(anyInt());
         verify(pokemonMapper, times(2)).toPokemon(any(PokeApiResponse.class), anyInt());
     }
 
@@ -64,14 +64,14 @@ class PokemonServiceTest {
         PokeApiResponse response = createPikachuResponse();
         Pokemon pokemon = new Pokemon(PIKACHU_NAME, List.of(ELECTRIC_TYPE), PIKACHU_IMAGE_URL, TEST_STRENGTH);
         
-        when(pokeApiClient.fetchPokemonById(anyInt())).thenReturn(response);
+        when(pokeApiClient.fetchPokemon(anyInt())).thenReturn(response);
         when(pokemonMapper.toPokemon(any(PokeApiResponse.class), anyInt())).thenReturn(pokemon);
 
         // when
         service.getPokemons();
 
         // then
-        verify(pokeApiClient, times(2)).fetchPokemonById(anyInt());
+        verify(pokeApiClient, times(2)).fetchPokemon(anyInt());
     }
 
     @Test
@@ -80,7 +80,7 @@ class PokemonServiceTest {
         PokeApiResponse response = createPikachuResponse();
         Pokemon pokemon = new Pokemon(PIKACHU_NAME, List.of(ELECTRIC_TYPE), PIKACHU_IMAGE_URL, TEST_STRENGTH);
         
-        when(pokeApiClient.fetchPokemonById(anyInt()))
+        when(pokeApiClient.fetchPokemon(anyInt()))
                 .thenThrow(HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", null, null, null))
                 .thenReturn(response);
         when(pokemonMapper.toPokemon(any(PokeApiResponse.class), anyInt())).thenReturn(pokemon);
@@ -91,13 +91,13 @@ class PokemonServiceTest {
         // then
         assertThat(result).isNotNull();
         assertThat(result.pokemons()).hasSize(2);
-        verify(pokeApiClient, atLeast(2)).fetchPokemonById(anyInt());
+        verify(pokeApiClient, atLeast(2)).fetchPokemon(anyInt());
     }
 
     @Test
     void getPokemons_shouldThrowPokemonGenerationException_whenAllRetriesFail() {
         // given
-        when(pokeApiClient.fetchPokemonById(anyInt()))
+        when(pokeApiClient.fetchPokemon(anyInt()))
                 .thenThrow(HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", null, null, null));
 
         // when/then
@@ -105,13 +105,13 @@ class PokemonServiceTest {
                 .isInstanceOf(PokemonGenerationException.class)
                 .hasMessageContaining("Failed to fetch pokemon after " + MAX_404_RETRY_ATTEMPTS + " attempts");
 
-        verify(pokeApiClient, times(MAX_404_RETRY_ATTEMPTS)).fetchPokemonById(anyInt());
+        verify(pokeApiClient, times(MAX_404_RETRY_ATTEMPTS)).fetchPokemon(anyInt());
     }
 
     @Test
     void getPokemons_shouldPropagateException_when400Occurs() {
         // given
-        when(pokeApiClient.fetchPokemonById(anyInt()))
+        when(pokeApiClient.fetchPokemon(anyInt()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
         // when/then
@@ -122,20 +122,20 @@ class PokemonServiceTest {
                     assertThat(clientEx.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
                 });
 
-        verify(pokeApiClient, times(1)).fetchPokemonById(anyInt());
+        verify(pokeApiClient, times(1)).fetchPokemon(anyInt());
     }
 
     @Test
     void getPokemons_shouldPropagateException_when403Occurs() {
         // given
-        when(pokeApiClient.fetchPokemonById(anyInt()))
+        when(pokeApiClient.fetchPokemon(anyInt()))
                 .thenThrow(new HttpClientErrorException(HttpStatus.FORBIDDEN));
 
         // when/then
         assertThatThrownBy(() -> service.getPokemons())
                 .isInstanceOf(HttpClientErrorException.class);
 
-        verify(pokeApiClient, times(1)).fetchPokemonById(anyInt());
+        verify(pokeApiClient, times(1)).fetchPokemon(anyInt());
     }
 
     @Test
@@ -144,7 +144,7 @@ class PokemonServiceTest {
         PokeApiResponse response = createPikachuResponse();
         Pokemon pokemon = new Pokemon(PIKACHU_NAME, List.of(ELECTRIC_TYPE), PIKACHU_IMAGE_URL, TEST_STRENGTH);
         
-        when(pokeApiClient.fetchPokemonById(anyInt()))
+        when(pokeApiClient.fetchPokemon(anyInt()))
                 .thenReturn(response)
                 .thenThrow(HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", null, null, null));
         when(pokemonMapper.toPokemon(any(PokeApiResponse.class), anyInt())).thenReturn(pokemon);
@@ -153,7 +153,7 @@ class PokemonServiceTest {
         assertThatThrownBy(() -> service.getPokemons())
                 .isInstanceOf(PokemonGenerationException.class);
 
-        verify(pokeApiClient, times(1 + MAX_404_RETRY_ATTEMPTS)).fetchPokemonById(anyInt());
+        verify(pokeApiClient, times(1 + MAX_404_RETRY_ATTEMPTS)).fetchPokemon(anyInt());
     }
 
     @Test
@@ -161,7 +161,7 @@ class PokemonServiceTest {
         // given
         PokeApiResponse response = createPikachuResponse();
         
-        when(pokeApiClient.fetchPokemonById(anyInt())).thenReturn(response);
+        when(pokeApiClient.fetchPokemon(anyInt())).thenReturn(response);
         when(pokemonMapper.toPokemon(any(PokeApiResponse.class), anyInt())).thenAnswer(invocation -> {
             int strength = invocation.getArgument(1);
             assertThat(strength).isBetween(MIN_STRENGTH, MAX_STRENGTH);
@@ -181,7 +181,7 @@ class PokemonServiceTest {
         PokeApiResponse response = createPikachuResponse();
         Pokemon pokemon = new Pokemon(PIKACHU_NAME, List.of(ELECTRIC_TYPE), PIKACHU_IMAGE_URL, TEST_STRENGTH);
         
-        when(pokeApiClient.fetchPokemonById(anyInt()))
+        when(pokeApiClient.fetchPokemon(anyInt()))
                 .thenThrow(HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", null, null, null))
                 .thenThrow(HttpClientErrorException.create(HttpStatus.NOT_FOUND, "Not Found", null, null, null))
                 .thenReturn(response);
@@ -192,6 +192,6 @@ class PokemonServiceTest {
 
         // then
         assertThat(result).isNotNull();
-        verify(pokeApiClient, atLeast(3)).fetchPokemonById(anyInt());
+        verify(pokeApiClient, atLeast(3)).fetchPokemon(anyInt());
     }
 }

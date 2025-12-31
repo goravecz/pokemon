@@ -1,7 +1,6 @@
 package com.accenture.pokemon.client;
 
 import com.accenture.pokemon.dto.PokeApiResponse;
-import com.accenture.pokemon.exception.PokeApiUnavailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,7 +34,7 @@ class PokeApiClientTest {
     }
 
     @Test
-    void fetchPokemonById_shouldReturnPokemon_whenRequestSucceeds() {
+    void fetchPokemon_shouldReturnPokemon_whenIdIsValid() {
         // given
         PokeApiResponse expectedResponse = createPikachuResponse();
         String url = buildPokemonUrl(PIKACHU_ID);
@@ -43,7 +42,7 @@ class PokeApiClientTest {
                 .thenReturn(expectedResponse);
 
         // when
-        PokeApiResponse result = client.fetchPokemonById(PIKACHU_ID);
+        PokeApiResponse result = client.fetchPokemon(PIKACHU_ID);
 
         // then
         assertThat(result)
@@ -57,7 +56,7 @@ class PokeApiClientTest {
     }
 
     @Test
-    void fetchPokemonByName_shouldReturnPokemon_whenRequestSucceeds() {
+    void fetchPokemon_shouldReturnPokemon_whenNameIsValid() {
         // given
         PokeApiResponse expectedResponse = createPikachuResponse();
         String url = buildPokemonUrl(PIKACHU_NAME);
@@ -65,7 +64,7 @@ class PokeApiClientTest {
                 .thenReturn(expectedResponse);
 
         // when
-        PokeApiResponse result = client.fetchPokemonByName(PIKACHU_NAME);
+        PokeApiResponse result = client.fetchPokemon(PIKACHU_NAME);
 
         // then
         assertThat(result)
@@ -79,7 +78,7 @@ class PokeApiClientTest {
     }
 
     @Test
-    void fetchPokemonByName_shouldLowercaseName() {
+    void fetchPokemon_shouldLowercaseName() {
         // given
         String upperCaseName = "PIKACHU";
         PokeApiResponse expectedResponse = createPikachuResponse();
@@ -88,7 +87,7 @@ class PokeApiClientTest {
                 .thenReturn(expectedResponse);
 
         // when
-        PokeApiResponse result = client.fetchPokemonByName(upperCaseName);
+        PokeApiResponse result = client.fetchPokemon(upperCaseName);
 
         // then
         assertThat(result.name()).isEqualTo(PIKACHU_NAME);
@@ -102,27 +101,27 @@ class PokeApiClientTest {
         when(restTemplate.getForObject(eq(url), eq(PokeApiResponse.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
-        // when
-        // then
-        assertThatThrownBy(() -> client.fetchPokemonById(NONEXISTENT_POKEMON_ID))
-                .isInstanceOf(PokeApiUnavailableException.class)
-                .hasMessageContaining("PokeAPI unavailable after retries");
+        // when / then
+        // 404 is not retryable, should fail immediately
+        assertThatThrownBy(() -> client.fetchPokemon(NONEXISTENT_POKEMON_ID))
+                .isInstanceOf(HttpClientErrorException.class)
+                .hasMessageContaining("404");
 
         verify(restTemplate, times(1)).getForObject(eq(url), eq(PokeApiResponse.class));
     }
 
     @Test
-    void fetchPokemonById_shouldThrowException_whenClientError() {
+    void fetchPokemon_shouldThrowException_whenClientError() {
         // given
         String url = buildPokemonUrl(PIKACHU_ID);
         when(restTemplate.getForObject(eq(url), eq(PokeApiResponse.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-        // when
-        // then
-        assertThatThrownBy(() -> client.fetchPokemonById(PIKACHU_ID))
-                .isInstanceOf(PokeApiUnavailableException.class)
-                .hasMessageContaining("PokeAPI unavailable after retries");
+        // when / then
+        // 400 is not retryable, should fail immediately
+        assertThatThrownBy(() -> client.fetchPokemon(PIKACHU_ID))
+                .isInstanceOf(HttpClientErrorException.class)
+                .hasMessageContaining("400");
 
         verify(restTemplate, times(1)).getForObject(eq(url), eq(PokeApiResponse.class));
     }

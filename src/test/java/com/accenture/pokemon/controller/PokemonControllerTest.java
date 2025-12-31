@@ -1,7 +1,11 @@
 package com.accenture.pokemon.controller;
 
+import com.accenture.pokemon.dto.BattleRequest;
+import com.accenture.pokemon.dto.BattleResponse;
 import com.accenture.pokemon.dto.PokemonPairResponse;
+import com.accenture.pokemon.exception.PokemonNotFoundException;
 import com.accenture.pokemon.model.Pokemon;
+import com.accenture.pokemon.service.BattleService;
 import com.accenture.pokemon.service.PokemonService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,11 +28,14 @@ class PokemonControllerTest {
     @Mock
     private PokemonService pokemonService;
 
+    @Mock
+    private BattleService battleService;
+
     private PokemonController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new PokemonController(pokemonService);
+        controller = new PokemonController(pokemonService, battleService);
     }
 
     @Test
@@ -90,5 +97,72 @@ class PokemonControllerTest {
 
         // then
         verify(pokemonService, times(1)).getPokemons();
+    }
+
+    @Test
+    void getBattleResult_shouldReturn200_whenSuccessful() {
+        // given
+        Pokemon pikachu = new Pokemon(PIKACHU_NAME, List.of(ELECTRIC_TYPE), PIKACHU_IMAGE_URL, 15);
+        BattleRequest request = new BattleRequest(List.of(PIKACHU_NAME, "squirtle"));
+        BattleResponse battleResponse = new BattleResponse(pikachu);
+        when(battleService.getBattleResult(request)).thenReturn(battleResponse);
+
+        // when
+        ResponseEntity<BattleResponse> result = controller.getBattleResult(request);
+
+        // then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().winner()).isEqualTo(pikachu);
+        verify(battleService).getBattleResult(request);
+    }
+
+    @Test
+    void getBattleResult_shouldReturnWinner_whenSuccessful() {
+        // given
+        Pokemon charizard = new Pokemon("charizard", List.of("fire", "flying"), "url", 18);
+        BattleRequest request = new BattleRequest(List.of(PIKACHU_NAME, "charizard"));
+        BattleResponse battleResponse = new BattleResponse(charizard);
+        when(battleService.getBattleResult(request)).thenReturn(battleResponse);
+
+        // when
+        ResponseEntity<BattleResponse> result = controller.getBattleResult(request);
+
+        // then
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().winner()).isEqualTo(charizard);
+    }
+
+    @Test
+    void getBattleResult_shouldPropagateException_whenServiceThrows() {
+        // given
+        BattleRequest request = new BattleRequest(List.of("invalidpokemon", PIKACHU_NAME));
+        PokemonNotFoundException exception = new PokemonNotFoundException(
+                "Pokemon(s) not found: invalidpokemon",
+                null
+        );
+        when(battleService.getBattleResult(request)).thenThrow(exception);
+
+        // when / then
+        assertThatThrownBy(() -> controller.getBattleResult(request))
+                .isInstanceOf(PokemonNotFoundException.class)
+                .hasMessageContaining("Pokemon(s) not found");
+
+        verify(battleService).getBattleResult(request);
+    }
+
+    @Test
+    void getBattleResult_shouldCallService_whenInvoked() {
+        // given
+        Pokemon pikachu = new Pokemon(PIKACHU_NAME, List.of(ELECTRIC_TYPE), PIKACHU_IMAGE_URL, 10);
+        BattleRequest request = new BattleRequest(List.of(PIKACHU_NAME, "charizard"));
+        BattleResponse battleResponse = new BattleResponse(pikachu);
+        when(battleService.getBattleResult(request)).thenReturn(battleResponse);
+
+        // when
+        controller.getBattleResult(request);
+
+        // then
+        verify(battleService, times(1)).getBattleResult(request);
     }
 }
