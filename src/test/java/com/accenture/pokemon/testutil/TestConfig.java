@@ -1,16 +1,14 @@
 package com.accenture.pokemon.testutil;
 
 import com.accenture.pokemon.config.PokeApiProperties;
+import com.accenture.pokemon.config.PokeApiRetryPolicy;
 import com.accenture.pokemon.config.RetryConfig;
 import com.accenture.pokemon.config.TimeoutConfig;
 import com.accenture.pokemon.dto.*;
-import com.accenture.pokemon.exception.RetryablePokeApiException;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
-import org.springframework.retry.policy.SimpleRetryPolicy;
 import org.springframework.retry.support.RetryTemplate;
 
 import java.util.List;
-import java.util.Map;
 
 public final class TestConfig {
 
@@ -41,7 +39,15 @@ public final class TestConfig {
     
     // API Endpoints
     public static final String POKEMONS_ENDPOINT = "/api/v1/pokemons";
+    public static final String BATTLES_ENDPOINT = "/api/v1/battles";
     public static final String HTTPS_PREFIX = "https://";
+    
+    // Battle Test Data
+    public static final String CHARIZARD_NAME = "charizard";
+    public static final String BULBASAUR_NAME = "bulbasaur";
+    public static final String SQUIRTLE_NAME = "squirtle";
+    public static final String INVALID_POKEMON_NAME = "invalidpokemon";
+    public static final String INVALID_POKEMON_NAME_2 = "anotherfakemon";
     
     // Mock JSON Responses
     public static final String PIKACHU_JSON = """
@@ -94,12 +100,7 @@ public final class TestConfig {
     public static RetryTemplate createTestRetryTemplate() {
         RetryTemplate retryTemplate = new RetryTemplate();
 
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy(
-                MAX_RETRY_ATTEMPTS,
-                Map.of(RetryablePokeApiException.class, true),
-                true
-        );
-        retryTemplate.setRetryPolicy(retryPolicy);
+        retryTemplate.setRetryPolicy(new PokeApiRetryPolicy(MAX_RETRY_ATTEMPTS));
 
         ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
         backOffPolicy.setInitialInterval(INITIAL_BACKOFF_MS);

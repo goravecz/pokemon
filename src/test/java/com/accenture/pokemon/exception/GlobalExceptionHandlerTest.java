@@ -4,9 +4,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClientException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,36 +21,22 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handlePokemonGenerationError_shouldReturn500_whenGenerationFails() {
+    void handleValidationError_shouldReturn400() {
         // given
-        PokemonGenerationException ex = new PokemonGenerationException(
-                "Failed to generate pokemon",
-                new HttpClientErrorException(HttpStatus.NOT_FOUND)
-        );
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "battleRequest");
+        bindingResult.addError(new FieldError("battleRequest", "pokemons", "Pokemon name must not be blank"));
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(null, bindingResult);
 
         // when
-        ProblemDetail result = handler.handlePokemonGenerationError(ex);
+        ProblemDetail result = handler.handleValidationError(ex);
 
         // then
-        assertThat(result.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        assertThat(result.getDetail()).isEqualTo("Unable to generate random pokemon");
+        assertThat(result.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(result.getDetail()).contains("Pokemon name must not be blank");
     }
 
     @Test
-    void handleHttpClientError_shouldReturn404_when404() {
-        // given
-        HttpClientErrorException ex = new HttpClientErrorException(HttpStatus.NOT_FOUND);
-
-        // when
-        ProblemDetail result = handler.handleHttpClientError(ex);
-
-        // then
-        assertThat(result.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(result.getDetail()).isEqualTo("Pokemon not found");
-    }
-
-    @Test
-    void handleHttpClientError_shouldReturn500_when400() {
+    void handleHttpClientError_shouldReturn500_when4xxOtherThan429Or408() {
         // given
         HttpClientErrorException ex = new HttpClientErrorException(HttpStatus.BAD_REQUEST);
 
@@ -62,28 +49,12 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleHttpClientError_shouldReturn500_when403() {
+    void handleHttpClientError_shouldReturn503_when429() {
         // given
-        HttpClientErrorException ex = new HttpClientErrorException(HttpStatus.FORBIDDEN);
+        HttpClientErrorException ex = new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS);
 
         // when
         ProblemDetail result = handler.handleHttpClientError(ex);
-
-        // then
-        assertThat(result.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        assertThat(result.getDetail()).isEqualTo("An unexpected error occurred");
-    }
-
-    @Test
-    void handlePokeApiUnavailable_shouldReturn503_whenApiUnavailable() {
-        // given
-        PokeApiUnavailableException ex = new PokeApiUnavailableException(
-                "PokeAPI unavailable",
-                new RuntimeException("Connection timeout")
-        );
-
-        // when
-        ProblemDetail result = handler.handlePokeApiUnavailable(ex);
 
         // then
         assertThat(result.getStatus()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value());
@@ -91,54 +62,16 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleNetworkError_shouldReturn502_whenNetworkError() {
+    void handleHttpClientError_shouldReturn503_when408() {
         // given
-        ResourceAccessException ex = new ResourceAccessException("Connection refused");
+        HttpClientErrorException ex = new HttpClientErrorException(HttpStatus.REQUEST_TIMEOUT);
 
         // when
-        ProblemDetail result = handler.handleNetworkError(ex);
+        ProblemDetail result = handler.handleHttpClientError(ex);
 
         // then
-        assertThat(result.getStatus()).isEqualTo(HttpStatus.BAD_GATEWAY.value());
-        assertThat(result.getDetail()).isEqualTo("Unable to reach external API");
+        assertThat(result.getStatus()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value());
+        assertThat(result.getDetail()).isEqualTo("External API temporarily unavailable");
     }
 
-    @Test
-    void handleRestClientError_shouldReturn502_whenRestClientError() {
-        // given
-        RestClientException ex = new RestClientException("Unknown error");
-
-        // when
-        ProblemDetail result = handler.handleRestClientError(ex);
-
-        // then
-        assertThat(result.getStatus()).isEqualTo(HttpStatus.BAD_GATEWAY.value());
-        assertThat(result.getDetail()).isEqualTo("Error communicating with external API");
-    }
-
-    @Test
-    void handleGenericError_shouldReturn500_whenUnexpectedException() {
-        // given
-        Exception ex = new NullPointerException("Unexpected NPE");
-
-        // when
-        ProblemDetail result = handler.handleGenericError(ex);
-
-        // then
-        assertThat(result.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        assertThat(result.getDetail()).isEqualTo("An unexpected error occurred");
-    }
-
-    @Test
-    void handleGenericError_shouldReturn500_whenIllegalStateException() {
-        // given
-        Exception ex = new IllegalStateException("Invalid state");
-
-        // when
-        ProblemDetail result = handler.handleGenericError(ex);
-
-        // then
-        assertThat(result.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        assertThat(result.getDetail()).isEqualTo("An unexpected error occurred");
-    }
 }

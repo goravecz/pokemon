@@ -38,6 +38,13 @@ public class PokemonService {
         return new PokemonPairResponse(pokemons);
     }
 
+    public Pokemon getPokemonByName(String name) {
+        PokeApiResponse response = pokeApiClient.fetchPokemon(name);
+        int strength = randomStrength();
+
+        return pokemonMapper.toPokemon(response, strength);
+    }
+
     private List<Pokemon> generateTwoDifferentPokemons() {
         List<Integer> ids = generateTwoDifferentIds();
 
@@ -59,7 +66,7 @@ public class PokemonService {
 
         for (int attempt = 1; attempt <= MAX_404_RETRIES; attempt++) {
             try {
-                return pokeApiClient.fetchPokemonById(currentId);
+                return pokeApiClient.fetchPokemon(currentId);
             } catch (HttpClientErrorException.NotFound ex) {
                 lastException = ex;
                 LOG.warn(

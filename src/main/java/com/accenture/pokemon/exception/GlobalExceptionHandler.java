@@ -4,11 +4,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClientException;
+
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,17 +28,42 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(PokemonNotFoundException.class)
+    public ProblemDetail handlePokemonNotFound(PokemonNotFoundException ex) {
+        LOG.warn("Pokemon not found: {}", ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleValidationError(MethodArgumentNotValidException ex) {
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+        
+        LOG.warn("Validation failed: {}", errorMessage);
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                errorMessage
+        );
+    }
+
     @ExceptionHandler(HttpClientErrorException.class)
     public ProblemDetail handleHttpClientError(HttpClientErrorException ex) {
-        if (ex.getStatusCode().value() == 404) {
-            LOG.warn("Pokemon not found in PokeAPI: {}", ex.getMessage());
+        HttpStatus statusCode = HttpStatus.resolve(ex.getStatusCode().value());
+        
+        // 429 (rate limit) and 408 (timeout) are temporary - should have been retried
+        if (statusCode == HttpStatus.TOO_MANY_REQUESTS || statusCode == HttpStatus.REQUEST_TIMEOUT) {
+            LOG.error("Rate limit or timeout from PokeAPI after retries: {}", ex.getMessage());
             return ProblemDetail.forStatusAndDetail(
-                    HttpStatus.NOT_FOUND,
-                    "Pokemon not found"
+                    HttpStatus.SERVICE_UNAVAILABLE,
+                    "External API temporarily unavailable"
             );
         }
         
-        // Other 4xx errors indicate a bug in our code (bad request to PokeAPI)
+        // Other 4xx errors indicate a bug on our side (bad request to PokeAPI)
         LOG.error("Invalid request sent to PokeAPI: {}", ex.getMessage());
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
@@ -42,9 +71,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(PokeApiUnavailableException.class)
-    public ProblemDetail handlePokeApiUnavailable(PokeApiUnavailableException ex) {
-        LOG.error("PokeAPI service unavailable after retries: {}", ex.getMessage());
+    @ExceptionHandler(HttpServerErrorException.class)
+    public ProblemDetail handleHttpServerError(HttpServerErrorException ex) {
+        LOG.error("PokeAPI server error after retries: {}", ex.getMessage());
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "External API temporarily unavailable"
@@ -57,15 +86,6 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_GATEWAY,
                 "Unable to reach external API"
-        );
-    }
-
-    @ExceptionHandler(RestClientException.class)
-    public ProblemDetail handleRestClientError(RestClientException ex) {
-        LOG.error("Error communicating with PokeAPI: {}", ex.getMessage());
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_GATEWAY,
-                "Error communicating with external API"
         );
     }
 
