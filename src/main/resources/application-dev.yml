@@ -1,11 +1,26 @@
 spring:
   application:
     name: pokemon
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/battle_history_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-# uncomment for verbose response logging
-#logging:
-#  level:
-#    com.accenture.pokemon.client: DEBUG
+#Uncomment com.accenture.pokemon.client for verbose logging in pokeapi client
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    #com.accenture.pokemon.client: DEBUG
 
 pokeapi:
   base-url: https://pokeapi.co/api/v2
