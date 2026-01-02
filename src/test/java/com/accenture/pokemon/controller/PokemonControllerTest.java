@@ -5,6 +5,7 @@ import com.accenture.pokemon.dto.BattleResponse;
 import com.accenture.pokemon.dto.PokemonPairResponse;
 import com.accenture.pokemon.exception.PokemonNotFoundException;
 import com.accenture.pokemon.model.Pokemon;
+import com.accenture.pokemon.service.BattleHistoryService;
 import com.accenture.pokemon.service.BattleService;
 import com.accenture.pokemon.service.PokemonService;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,11 +32,14 @@ class PokemonControllerTest {
     @Mock
     private BattleService battleService;
 
+    @Mock
+    private BattleHistoryService battleHistoryService;
+
     private PokemonController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new PokemonController(pokemonService, battleService);
+        controller = new PokemonController(pokemonService, battleService, battleHistoryService);
     }
 
     @Test
