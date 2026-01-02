@@ -22,7 +22,8 @@ import java.net.SocketTimeoutException;
 
 import java.util.List;
 
-import static com.accenture.pokemon.testutil.TestConfig.*;
+import static com.accenture.pokemon.testutil.JsonLoader.*;
+import static com.accenture.pokemon.testutil.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
@@ -54,11 +55,11 @@ class PokemonControllerIT {
         // given
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getCharizardJson(), MediaType.APPLICATION_JSON));
 
         // when
         ResponseEntity<PokemonPairResponse> response = testRestTemplate.getForEntity(
@@ -85,11 +86,11 @@ class PokemonControllerIT {
         // given
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getCharizardJson(), MediaType.APPLICATION_JSON));
 
         // when
         ResponseEntity<PokemonPairResponse> response = testRestTemplate.getForEntity(
@@ -113,11 +114,11 @@ class PokemonControllerIT {
         // given
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(BULBASAUR_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getBulbasaurJson(), MediaType.APPLICATION_JSON));
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(SQUIRTLE_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getSquirtleJson(), MediaType.APPLICATION_JSON));
 
         // when
         ResponseEntity<PokemonPairResponse> response = testRestTemplate.getForEntity(
@@ -143,11 +144,11 @@ class PokemonControllerIT {
         // given - two successful calls
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(BULBASAUR_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getBulbasaurJson(), MediaType.APPLICATION_JSON));
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(SQUIRTLE_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getSquirtleJson(), MediaType.APPLICATION_JSON));
 
         // when
         ResponseEntity<PokemonPairResponse> response = testRestTemplate.getForEntity(
@@ -174,11 +175,11 @@ class PokemonControllerIT {
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getCharizardJson(), MediaType.APPLICATION_JSON));
 
         // when
         ResponseEntity<PokemonPairResponse> response = testRestTemplate.getForEntity(
@@ -282,11 +283,11 @@ class PokemonControllerIT {
         // given
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getCharizardJson(), MediaType.APPLICATION_JSON));
 
         BattleRequest request = new BattleRequest(List.of("pikachu", "charizard"));
 
@@ -315,7 +316,7 @@ class PokemonControllerIT {
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
 
         BattleRequest request = new BattleRequest(List.of("invalidpokemon", "pikachu"));
 
@@ -372,11 +373,11 @@ class PokemonControllerIT {
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getCharizardJson(), MediaType.APPLICATION_JSON));
 
         BattleRequest request = new BattleRequest(List.of("pikachu", "charizard"));
 
@@ -433,11 +434,11 @@ class PokemonControllerIT {
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
 
         mockServer.expect(anything())
                 .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(getCharizardJson(), MediaType.APPLICATION_JSON));
 
         BattleRequest request = new BattleRequest(List.of("pikachu", "charizard"));
 
@@ -519,6 +520,40 @@ class PokemonControllerIT {
     }
 
     @Test
+    void getBattleResult_shouldReturn400_whenPokemonNameContainsInvalidCharacters() {
+        // given
+        BattleRequest request = new BattleRequest(List.of("pokémon", "pikachu"));
+
+        // when
+        ResponseEntity<String> response = testRestTemplate.postForEntity(
+                BATTLES_ENDPOINT,
+                request,
+                String.class
+        );
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("Invalid Pokemon name");
+    }
+
+    @Test
+    void getBattleResult_shouldReturn400_whenPokemonNameContainsSpaces() {
+        // given
+        BattleRequest request = new BattleRequest(List.of("pokemon with spaces", "pikachu"));
+
+        // when
+        ResponseEntity<String> response = testRestTemplate.postForEntity(
+                BATTLES_ENDPOINT,
+                request,
+                String.class
+        );
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("Invalid Pokemon name");
+    }
+
+    @Test
     void getBattleResult_shouldReturn500_whenNetworkError() {
         // given - mock a network error with retry attempts (3 total attempts)
         mockServer.expect(anything())
@@ -572,10 +607,10 @@ class PokemonControllerIT {
     @Test
     void getBattleHistory_shouldReturn200AndBattles_whenBattlesExist() {
         // given - create two battles
-        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
-        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
-        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(SQUIRTLE_JSON, MediaType.APPLICATION_JSON));
-        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(BULBASAUR_JSON, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(getCharizardJson(), MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(getSquirtleJson(), MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(getBulbasaurJson(), MediaType.APPLICATION_JSON));
 
         testRestTemplate.postForEntity(BATTLES_ENDPOINT, new BattleRequest(List.of(PIKACHU_NAME, CHARIZARD_NAME)), BattleResponse.class);
         testRestTemplate.postForEntity(BATTLES_ENDPOINT, new BattleRequest(List.of(SQUIRTLE_NAME, BULBASAUR_NAME)), BattleResponse.class);
@@ -606,10 +641,10 @@ class PokemonControllerIT {
     @Test
     void getBattleHistory_shouldReturnBattlesInDescendingOrder_whenMultipleBattlesExist() {
         // given - create two battles with different timestamps
-        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
-        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
-        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(SQUIRTLE_JSON, MediaType.APPLICATION_JSON));
-        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(BULBASAUR_JSON, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(getPikachuJson(), MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(getCharizardJson(), MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(getSquirtleJson(), MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(getBulbasaurJson(), MediaType.APPLICATION_JSON));
 
         testRestTemplate.postForEntity(
                 BATTLES_ENDPOINT,

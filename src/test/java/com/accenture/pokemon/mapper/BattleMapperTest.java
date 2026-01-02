@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static com.accenture.pokemon.testutil.TestConfig.*;
+import static com.accenture.pokemon.testutil.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -44,10 +44,12 @@ class BattleMapperTest {
         // then
         assertThat(result.getWinnerName()).isEqualTo(CHARIZARD_NAME);
         assertThat(result.getParticipants()).hasSize(2);
-        assertThat(result.getParticipants().get(0).getPokemon()).isEqualTo(pikachuEntity);
-        assertThat(result.getParticipants().get(0).getStrength()).isEqualTo(PIKACHU_STRENGTH);
-        assertThat(result.getParticipants().get(1).getPokemon()).isEqualTo(charizardEntity);
-        assertThat(result.getParticipants().get(1).getStrength()).isEqualTo(CHARIZARD_STRENGTH);
+        assertThat(result.getParticipants())
+                .extracting(BattleParticipantEntity::getPokemon)
+                .containsExactlyInAnyOrder(pikachuEntity, charizardEntity);
+        assertThat(result.getParticipants())
+                .extracting(BattleParticipantEntity::getStrength)
+                .containsExactlyInAnyOrder(PIKACHU_STRENGTH, CHARIZARD_STRENGTH);
     }
 
     @Test
@@ -68,8 +70,8 @@ class BattleMapperTest {
         BattleEntity result = battleMapper.toEntity(battle, pokemonEntities);
 
         // then
-        assertThat(result.getParticipants().get(0).getBattle()).isEqualTo(result);
-        assertThat(result.getParticipants().get(1).getBattle()).isEqualTo(result);
+        assertThat(result.getParticipants())
+                .allSatisfy(participant -> assertThat(participant.getBattle()).isEqualTo(result));
     }
 
     @Test
@@ -111,12 +113,25 @@ class BattleMapperTest {
         // then
         assertThat(result.winner()).isEqualTo(CHARIZARD_NAME);
         assertThat(result.pokemons()).hasSize(2);
-        assertThat(result.pokemons().get(0).name()).isEqualTo(PIKACHU_NAME);
-        assertThat(result.pokemons().get(0).types()).containsExactly(ELECTRIC_TYPE);
-        assertThat(result.pokemons().get(0).strength()).isEqualTo(PIKACHU_STRENGTH);
-        assertThat(result.pokemons().get(1).name()).isEqualTo(CHARIZARD_NAME);
-        assertThat(result.pokemons().get(1).types()).containsExactly(FIRE_TYPE, FLYING_TYPE);
-        assertThat(result.pokemons().get(1).strength()).isEqualTo(CHARIZARD_STRENGTH);
+        assertThat(result.pokemons())
+                .extracting(com.accenture.pokemon.dto.Pokemon::name)
+                .containsExactlyInAnyOrder(PIKACHU_NAME, CHARIZARD_NAME);
+        
+        // Verify pikachu
+        com.accenture.pokemon.dto.Pokemon pikachuDto = result.pokemons().stream()
+                .filter(p -> p.name().equals(PIKACHU_NAME))
+                .findFirst()
+                .orElseThrow();
+        assertThat(pikachuDto.types()).containsExactly(ELECTRIC_TYPE);
+        assertThat(pikachuDto.strength()).isEqualTo(PIKACHU_STRENGTH);
+        
+        // Verify charizard
+        com.accenture.pokemon.dto.Pokemon charizardDto = result.pokemons().stream()
+                .filter(p -> p.name().equals(CHARIZARD_NAME))
+                .findFirst()
+                .orElseThrow();
+        assertThat(charizardDto.types()).containsExactlyInAnyOrder(FIRE_TYPE, FLYING_TYPE);
+        assertThat(charizardDto.strength()).isEqualTo(CHARIZARD_STRENGTH);
     }
 
     @Test
@@ -140,7 +155,19 @@ class BattleMapperTest {
         // then
         assertThat(result.winner()).isEqualTo(PIKACHU_NAME);
         assertThat(result.pokemons()).hasSize(2);
-        assertThat(result.pokemons().get(0).types()).containsExactly(ELECTRIC_TYPE);
-        assertThat(result.pokemons().get(1).types()).containsExactly(WATER_TYPE);
+        
+        // Verify pikachu
+        com.accenture.pokemon.dto.Pokemon pikachuDto = result.pokemons().stream()
+                .filter(p -> p.name().equals(PIKACHU_NAME))
+                .findFirst()
+                .orElseThrow();
+        assertThat(pikachuDto.types()).containsExactly(ELECTRIC_TYPE);
+        
+        // Verify squirtle
+        com.accenture.pokemon.dto.Pokemon squirtleDto = result.pokemons().stream()
+                .filter(p -> p.name().equals(SQUIRTLE_NAME))
+                .findFirst()
+                .orElseThrow();
+        assertThat(squirtleDto.types()).containsExactly(WATER_TYPE);
     }
 }

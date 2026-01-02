@@ -21,6 +21,10 @@ pokeapi:
     initial-backoff-ms: 100
     multiplier: 2.0
     max-interval: 10000
+  generation:
+    max-pokemon-id: 1024
+    max-strength: 20
+    max404-retries: 3
 
 logging:
   level:

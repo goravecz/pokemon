@@ -16,7 +16,8 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 
-import static com.accenture.pokemon.testutil.TestConfig.*;
+import static com.accenture.pokemon.testutil.TestConstants.*;
+import static com.accenture.pokemon.testutil.TestFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,7 +37,7 @@ class PokemonServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PokemonService(pokeApiClient, pokemonMapper);
+        service = new PokemonService(pokeApiClient, pokemonMapper, createTestProperties());
     }
 
     @Test
