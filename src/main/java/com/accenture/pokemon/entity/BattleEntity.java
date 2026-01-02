@@ -7,8 +7,9 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "battles")
@@ -22,7 +23,7 @@ public class BattleEntity {
     private Long id;
 
     @OneToMany(mappedBy = "battle", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BattleParticipantEntity> participants = new ArrayList<>();
+    private Set<BattleParticipantEntity> participants = new HashSet<>();
 
     @Column(nullable = false)
     private String winnerName;
@@ -32,6 +33,10 @@ public class BattleEntity {
     private Instant createdAt;
 
     public BattleEntity() {
+    }
+
+    public List<BattleParticipantEntity> getParticipants() {
+        return List.copyOf(participants);
     }
 
     public void addParticipant(BattleParticipantEntity participant) {

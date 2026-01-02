@@ -18,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
-import static com.accenture.pokemon.testutil.TestConfig.*;
+import static com.accenture.pokemon.testutil.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;

@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static com.accenture.pokemon.testutil.TestConfig.*;
+import static com.accenture.pokemon.testutil.TestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -84,19 +84,6 @@ class BattleHistoryServiceTest {
         assertThat(response.battles()).hasSize(2);
         assertThat(response.battles().get(0).winner()).isEqualTo(CHARIZARD_NAME);
         assertThat(response.battles().get(1).winner()).isEqualTo(BULBASAUR_NAME);
-    }
-
-    @Test
-    void getBattleHistory_shouldUseCorrectRepositoryMethod() {
-        // given
-        when(battleHistoryRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of());
-
-        // when
-        battleHistoryService.getBattleHistory();
-
-        // then
-        // Verify that the correct repository method is called (ordered by createdAt desc)
-        // This is implicitly verified by the mock setup
     }
 
     private BattleEntity createBattleEntity(String pokemon1Name, String pokemon2Name, String winnerName) {

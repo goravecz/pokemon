@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import static com.accenture.pokemon.testutil.TestConfig.*;
+import static com.accenture.pokemon.testutil.TestConstants.*;
+import static com.accenture.pokemon.testutil.TestFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;

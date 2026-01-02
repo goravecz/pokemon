@@ -5,7 +5,8 @@ import com.accenture.pokemon.model.Pokemon;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.accenture.pokemon.testutil.TestConfig.*;
+import static com.accenture.pokemon.testutil.TestConstants.*;
+import static com.accenture.pokemon.testutil.TestFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PokemonMapperTest {

@@ -5,8 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "pokemons")
@@ -23,10 +24,14 @@ public class PokemonEntity {
     private String name;
 
     @OneToMany(mappedBy = "pokemon", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PokemonTypeEntity> types = new ArrayList<>();
+    private Set<PokemonTypeEntity> types = new HashSet<>();
 
     public PokemonEntity(String name) {
         this.name = name;
+    }
+
+    public List<PokemonTypeEntity> getTypes() {
+        return List.copyOf(types);
     }
 
     public void addType(String type) {

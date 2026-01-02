@@ -7,6 +7,7 @@ public record PokeApiProperties(
         String baseUrl,
         String pokemonPath,
         TimeoutConfig timeout,
-        RetryConfig retry
+        RetryConfig retry,
+        PokemonGenerationConfig generation
 ) {
 }

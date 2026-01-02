@@ -1,6 +1,7 @@
 package com.accenture.pokemon.service;
 
 import com.accenture.pokemon.client.PokeApiClient;
+import com.accenture.pokemon.config.PokeApiProperties;
 import com.accenture.pokemon.dto.PokeApiResponse;
 import com.accenture.pokemon.dto.PokemonPairResponse;
 import com.accenture.pokemon.exception.PokemonGenerationException;
@@ -19,18 +20,17 @@ public class PokemonService {
 
     private static final Logger LOG = LoggerFactory.getLogger(PokemonService.class);
 
-    private static final int MAX_STRENGTH = 20;
-    private static final int MAX_ID = 512;
-    private static final int MAX_404_RETRIES = 3;
-
     private final PokeApiClient pokeApiClient;
     private final PokemonMapper pokemonMapper;
+    private final PokeApiProperties properties;
 
     public PokemonService(
             PokeApiClient pokeApiClient,
-            PokemonMapper pokemonMapper) {
+            PokemonMapper pokemonMapper,
+            PokeApiProperties properties) {
         this.pokeApiClient = pokeApiClient;
         this.pokemonMapper = pokemonMapper;
+        this.properties = properties;
     }
 
     public PokemonPairResponse getPokemons() {
@@ -63,22 +63,23 @@ public class PokemonService {
     private PokeApiResponse fetchPokemonWithRetry(int initialId) {
         int currentId = initialId;
         HttpClientErrorException.NotFound lastException = null;
+        int maxRetries = properties.generation().max404Retries();
 
-        for (int attempt = 1; attempt <= MAX_404_RETRIES; attempt++) {
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 return pokeApiClient.fetchPokemon(currentId);
             } catch (HttpClientErrorException.NotFound ex) {
                 lastException = ex;
                 LOG.warn(
                         "Pokemon {} not found (attempt {}/{}), trying another ID",
-                        currentId, attempt, MAX_404_RETRIES
+                        currentId, attempt, maxRetries
                 );
                 currentId = randomId();
             }
         }
 
         throw new PokemonGenerationException(
-                "Failed to fetch pokemon after " + MAX_404_RETRIES + " attempts",
+                "Failed to fetch pokemon after " + maxRetries + " attempts",
                 lastException
         );
     }
@@ -91,15 +92,16 @@ public class PokemonService {
     }
 
     private int randomId() {
-        return ThreadLocalRandom.current().nextInt(1, MAX_ID + 1);
+        return ThreadLocalRandom.current().nextInt(1, properties.generation().maxPokemonId() + 1);
     }
 
     private int randomIdExcluding(int excluded) {
-        int candidate = ThreadLocalRandom.current().nextInt(1, MAX_ID);
+        int maxId = properties.generation().maxPokemonId();
+        int candidate = ThreadLocalRandom.current().nextInt(1, maxId);
         return candidate >= excluded ? candidate + 1 : candidate;
     }
 
     private int randomStrength() {
-        return ThreadLocalRandom.current().nextInt(1, MAX_STRENGTH + 1);
+        return ThreadLocalRandom.current().nextInt(1, properties.generation().maxStrength() + 1);
     }
 }

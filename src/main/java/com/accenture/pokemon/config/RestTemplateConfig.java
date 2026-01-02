@@ -2,13 +2,13 @@ package com.accenture.pokemon.config;
 
 import com.accenture.pokemon.client.PokeApiLoggingInterceptor;
 import com.accenture.pokemon.client.PokeApiRetryListener;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.backoff.ExponentialBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
@@ -24,12 +24,10 @@ public class RestTemplateConfig {
     public RestTemplate restTemplate(
             RestTemplateBuilder builder,
             PokeApiProperties properties,
-            PokeApiLoggingInterceptor loggingInterceptor) {
-        Logger clientLogger = LoggerFactory.getLogger("com.accenture.pokemon.client");
+            PokeApiLoggingInterceptor loggingInterceptor,
+            ClientHttpRequestFactory requestFactory) {
         return builder
-                .requestFactory(() -> clientLogger.isDebugEnabled()
-                        ? new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory())
-                        : new SimpleClientHttpRequestFactory())
+                .requestFactory(() -> requestFactory)
                 .connectTimeout(Duration.ofMillis(properties.timeout().connectMs()))
                 .readTimeout(Duration.ofMillis(properties.timeout().readMs()))
                 .interceptors(loggingInterceptor)
@@ -55,5 +53,17 @@ public class RestTemplateConfig {
         retryTemplate.setBackOffPolicy(backOffPolicy);
 
         return retryTemplate;
+    }
+
+    @Bean
+    @ConditionalOnExpression("'${logging.level.com.accenture.pokemon.client:INFO}'.equalsIgnoreCase('DEBUG')")
+    public ClientHttpRequestFactory bufferingRequestFactory() {
+        return new BufferingClientHttpRequestFactory(new SimpleClientHttpRequestFactory());
+    }
+
+    @Bean
+    @ConditionalOnExpression("!'${logging.level.com.accenture.pokemon.client:INFO}'.equalsIgnoreCase('DEBUG')")
+    public ClientHttpRequestFactory simpleRequestFactory() {
+        return new SimpleClientHttpRequestFactory();
     }
 }
