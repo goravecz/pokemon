@@ -1,15 +1,20 @@
 package com.accenture.pokemon.controller;
 
+import com.accenture.pokemon.dto.BattleHistoryResponse;
 import com.accenture.pokemon.dto.BattleRequest;
 import com.accenture.pokemon.dto.BattleResponse;
 import com.accenture.pokemon.dto.PokemonPairResponse;
+import com.accenture.pokemon.repository.BattleHistoryRepository;
+import com.accenture.pokemon.testutil.TestContainersConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,6 +29,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
+@Import(TestContainersConfiguration.class)
 class PokemonControllerIT {
 
     @Autowired
@@ -32,11 +38,15 @@ class PokemonControllerIT {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Autowired
+    private BattleHistoryRepository battleHistoryRepository;
+
     private MockRestServiceServer mockServer;
 
     @BeforeEach
     void setUp() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
+        battleHistoryRepository.deleteAll();
     }
 
     @Test
@@ -541,6 +551,91 @@ class PokemonControllerIT {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
         assertThat(response.getBody()).contains("Unable to reach external API");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void getBattleHistory_shouldReturn200AndEmptyList_whenNoBattlesExist() {
+        // when
+        ResponseEntity<BattleHistoryResponse> response = testRestTemplate.getForEntity(
+                "/api/v1/battles/history",
+                BattleHistoryResponse.class
+        );
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().battles()).isEmpty();
+    }
+
+    @Test
+    void getBattleHistory_shouldReturn200AndBattles_whenBattlesExist() {
+        // given - create two battles
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(SQUIRTLE_JSON, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(BULBASAUR_JSON, MediaType.APPLICATION_JSON));
+
+        testRestTemplate.postForEntity(BATTLES_ENDPOINT, new BattleRequest(List.of(PIKACHU_NAME, CHARIZARD_NAME)), BattleResponse.class);
+        testRestTemplate.postForEntity(BATTLES_ENDPOINT, new BattleRequest(List.of(SQUIRTLE_NAME, BULBASAUR_NAME)), BattleResponse.class);
+
+        // when
+        ResponseEntity<BattleHistoryResponse> response = testRestTemplate.getForEntity(
+                "/api/v1/battles/history",
+                BattleHistoryResponse.class
+        );
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().battles()).hasSize(2);
+        assertThat(response.getBody().battles()).allSatisfy(battle -> {
+            assertThat(battle.winner()).isNotBlank();
+            assertThat(battle.pokemons()).hasSize(2);
+            assertThat(battle.pokemons()).allSatisfy(pokemon -> {
+                assertThat(pokemon.name()).isNotBlank();
+                assertThat(pokemon.types()).isNotEmpty();
+                assertThat(pokemon.strength()).isBetween(MIN_STRENGTH, MAX_STRENGTH);
+            });
+        });
+
+        mockServer.verify();
+    }
+
+    @Test
+    void getBattleHistory_shouldReturnBattlesInDescendingOrder_whenMultipleBattlesExist() {
+        // given - create two battles with different timestamps
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(PIKACHU_JSON, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(CHARIZARD_JSON, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(SQUIRTLE_JSON, MediaType.APPLICATION_JSON));
+        mockServer.expect(ExpectedCount.once(), anything()).andRespond(withSuccess(BULBASAUR_JSON, MediaType.APPLICATION_JSON));
+
+        testRestTemplate.postForEntity(
+                BATTLES_ENDPOINT,
+                new BattleRequest(List.of(PIKACHU_NAME, CHARIZARD_NAME)),
+                BattleResponse.class
+        );
+
+        ResponseEntity<BattleResponse> secondBattle = testRestTemplate.postForEntity(
+                BATTLES_ENDPOINT,
+                new BattleRequest(List.of(SQUIRTLE_NAME, BULBASAUR_NAME)),
+                BattleResponse.class
+        );
+
+        // when
+        ResponseEntity<BattleHistoryResponse> response = testRestTemplate.getForEntity(
+                "/api/v1/battles/history",
+                BattleHistoryResponse.class
+        );
+
+        // then - most recent battle should be first
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().battles()).hasSize(2);
+        
+        // Second battle should be first (most recent)
+        assertThat(response.getBody().battles().get(0).winner()).isEqualTo(secondBattle.getBody().winner().name());
 
         mockServer.verify();
     }

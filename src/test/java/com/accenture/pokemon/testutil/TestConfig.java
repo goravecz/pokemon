@@ -48,6 +48,20 @@ public final class TestConfig {
     public static final String SQUIRTLE_NAME = "squirtle";
     public static final String INVALID_POKEMON_NAME = "invalidpokemon";
     public static final String INVALID_POKEMON_NAME_2 = "anotherfakemon";
+    public static final String MEWTWO_NAME = "mewtwo";
+    
+    // Strength Test Data
+    public static final int PIKACHU_STRENGTH = 15;
+    public static final int CHARIZARD_STRENGTH = 18;
+    public static final int SQUIRTLE_STRENGTH = 12;
+    public static final int WEAK_STRENGTH = 10;
+    
+    // Type Test Data
+    public static final String FIRE_TYPE = "fire";
+    public static final String WATER_TYPE = "water";
+    public static final String FLYING_TYPE = "flying";
+    public static final String GRASS_TYPE = "grass";
+    public static final String POISON_TYPE = "poison";
     
     // Mock JSON Responses
     public static final String PIKACHU_JSON = """

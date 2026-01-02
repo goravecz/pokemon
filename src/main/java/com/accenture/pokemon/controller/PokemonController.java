@@ -1,8 +1,10 @@
 package com.accenture.pokemon.controller;
 
+import com.accenture.pokemon.dto.BattleHistoryResponse;
 import com.accenture.pokemon.dto.BattleRequest;
 import com.accenture.pokemon.dto.BattleResponse;
 import com.accenture.pokemon.dto.PokemonPairResponse;
+import com.accenture.pokemon.service.BattleHistoryService;
 import com.accenture.pokemon.service.BattleService;
 import com.accenture.pokemon.service.PokemonService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,12 +28,15 @@ public class PokemonController {
 
     private final PokemonService pokemonService;
     private final BattleService battleService;
+    private final BattleHistoryService battleHistoryService;
 
     public PokemonController(
             PokemonService pokemonService,
-            BattleService battleService) {
+            BattleService battleService,
+            BattleHistoryService battleHistoryService) {
         this.pokemonService = pokemonService;
         this.battleService = battleService;
+        this.battleHistoryService = battleHistoryService;
     }
 
     @Operation(summary = "Returns a random Pokemon pair")
@@ -68,6 +73,20 @@ public class PokemonController {
         LOG.info("BattleRequest: {}", request);
         final BattleResponse response = battleService.getBattleResult(request);
         LOG.info("BattleResponse: {}", response);
+
+        return ResponseEntity.ok().body(response);
+    }
+
+    @Operation(summary = "Returns battle history with details")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully returned past battles"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    @GetMapping("/battles/history")
+    public ResponseEntity<BattleHistoryResponse> getBattleHistory() {
+        LOG.info("Battle history requested.");
+        final BattleHistoryResponse response = battleHistoryService.getBattleHistory();
+        LOG.info("BattleHistoryResponse: {}", response);
 
         return ResponseEntity.ok().body(response);
     }
